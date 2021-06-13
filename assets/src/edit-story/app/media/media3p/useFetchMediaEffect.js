@@ -82,8 +82,15 @@ export default function useFetchMediaEffect({
 
     async function fetch() {
       fetchMediaStart({ provider, pageToken });
+      const url = new URL(
+        PROVIDERS[provider].apiDomain + PROVIDERS[provider].paths.listMedia
+      );
+      if (PROVIDERS[provider]?.key) {
+        url.searchParams.append('key', PROVIDERS[provider]?.key);
+      }
       try {
         const { media, nextPageToken } = await listMedia({
+          url,
           provider,
           filter: {
             contentType: PROVIDERS[provider].contentTypeFilter,

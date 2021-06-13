@@ -91,8 +91,15 @@ function Media3pApiProvider({ children }) {
    */
   async function listMedia({ provider, filter, orderBy, pageToken }) {
     const { contentType, searchTerm, categoryId } = filter ?? {};
+    const url = new URL(
+      PROVIDERS[provider].apiDomain + PROVIDERS[provider].paths.listMedia
+    );
+    if (PROVIDERS[provider]?.key) {
+      url.searchParams.append('key', PROVIDERS[provider]?.key);
+    }
 
     const response = await apiFetcher.listMedia({
+      url,
       filter: constructFilter({
         provider,
         contentType,
@@ -122,7 +129,14 @@ function Media3pApiProvider({ children }) {
    */
   async function listCategories({ provider, orderBy }) {
     const filter = constructFilter({ provider });
+    const url = new URL(
+      PROVIDERS[provider].apiDomain + PROVIDERS[provider].paths.listCategory
+    );
+    if (PROVIDERS[provider]?.key) {
+      url.searchParams.append('key', PROVIDERS[provider].key);
+    }
     const response = await apiFetcher.listCategories({
+      url,
       filter,
       orderBy,
     });

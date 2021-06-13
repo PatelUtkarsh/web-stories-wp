@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 export const API_DOMAIN = 'https://media3p.googleapis.com';
-const API_KEY = 'AIzaSyDqgPsZ0VnxAuakmX7bjnzmNQsE7Drlvk0';
 
 /**
  * The methods exposed by the api
@@ -27,7 +25,6 @@ export const Paths = {
   LIST_CATEGORIES: '/v1/categories',
   REGISTER_USAGE: '/v1/media:registerUsage',
 };
-
 /**
  * The supported order_by values for {@link listMedia}.
  *
@@ -37,7 +34,6 @@ const ListMediaOrderBy = {
   RELEVANCE: 'relevance',
   LATEST: 'latest',
 };
-
 /**
  * The supported order_by values for {@link listCategories}.
  *
@@ -73,6 +69,7 @@ function validatePageSize(pageSize) {
 }
 
 function validateRegisterUsageUrl(url) {
+  // Todo update paths based on provider.
   if (url && url.includes(Paths.REGISTER_USAGE)) {
     return;
   }
@@ -86,6 +83,7 @@ class ApiFetcher {
    * an error is thrown.
    *
    * @param {Object} obj - An object with the options for the request.
+   * @param {URL} obj.url Url object.
    * @param {?string} obj.languageCode The BCP-47 language code, such as "en-US"
    * or "sr-Latn".
    * @param {?string} obj.filter  Filter details for items returned.
@@ -109,6 +107,7 @@ class ApiFetcher {
    * @return {Promise<Object>} The response from the API.
    */
   async listMedia({
+    url,
     languageCode = null,
     filter = null,
     orderBy = null,
@@ -129,7 +128,7 @@ class ApiFetcher {
     );
 
     // eslint-disable-next-line no-return-await
-    return await this.fetchPath({ params, path: Paths.LIST_MEDIA });
+    return await this.fetchUrlWithParams({ params, url });
   }
 
   /**
@@ -138,6 +137,7 @@ class ApiFetcher {
    * an error is thrown.
    *
    * @param {Object} obj - An object with the options for the request.
+   * @param {URL} obj.url - URL.
    * @param {?string} obj.filter  Filter details for items returned.
    * Filter fields available:
    * > provider - The media provider to query, or a universal list/search if
@@ -150,13 +150,13 @@ class ApiFetcher {
    * @return {Promise<Object>} The response from the API.
    */
   async listCategories({
+    url,
     filter = null,
     orderBy = null,
     pageSize = null,
   } = {}) {
     validateCategoriesOrderBy(orderBy);
     validatePageSize(pageSize);
-
     const params = new URLSearchParams(
       [
         ['filter', filter],
@@ -164,11 +164,10 @@ class ApiFetcher {
         ['page_size', pageSize],
       ].filter((entry) => Boolean(entry[1]))
     );
-
     // eslint-disable-next-line no-return-await
-    return await this.fetchPath({
+    return await this.fetchUrlWithParams({
       params,
-      path: Paths.LIST_CATEGORIES,
+      url,
     });
   }
 
@@ -183,7 +182,6 @@ class ApiFetcher {
    */
   async registerUsage({ registerUsageUrl }) {
     validateRegisterUsageUrl(registerUsageUrl);
-
     // eslint-disable-next-line no-return-await
     return await this.fetchUrl({
       url: new URL(registerUsageUrl),
@@ -195,13 +193,12 @@ class ApiFetcher {
    * Perform an HTTP request for the given params.
    *
    * @param {Object} obj - An object with the options for the request.
-   * @param {Paths} obj.path Url to be called.
+   * @param {URL} obj.url Url to be called.
    * @param {URLSearchParams} obj.params Url to be called.
    * @param {?string} obj.method A string to set request's method.
    * @return {Promise<Object>} The response from the API.
    */
-  async fetchPath({ path, params, method }) {
-    const url = new URL(API_DOMAIN + path);
+  async fetchUrlWithParams({ url, params, method }) {
     params.forEach((value, key) => {
       url.searchParams.append(key, value);
     });
@@ -218,7 +215,6 @@ class ApiFetcher {
    * @return {Promise<Object>} The response from the API.
    */
   async fetchUrl({ url, method }) {
-    url.searchParams.append('key', API_KEY);
     const response = await window.fetch(url.href, {
       method: method ?? 'GET',
     });

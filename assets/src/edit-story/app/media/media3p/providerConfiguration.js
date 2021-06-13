@@ -17,20 +17,53 @@
 /**
  * External dependencies
  */
-import { __, sprintf } from '@web-stories-wp/i18n';
+import { __ } from '@web-stories-wp/i18n';
+/**
+ * WordPress dependencies
+ */
+import { applyFilters, addFilter } from '@wordpress/hooks';
 
 /**
  * Internal dependencies
+ */
+/**
+ * WordPress dependencies
  */
 import {
   CoverrAttribution,
   TenorAttribution,
   UnsplashAttribution,
 } from './attribution';
+
 import { ContentType, ProviderType } from './constants';
+import { API_DOMAIN } from './api/apiFetcher';
+
+const API_KEY = 'AIzaSyDqgPsZ0VnxAuakmX7bjnzmNQsE7Drlvk0';
+
+function filterProvider(p) {
+  p.custom = {
+    displayName: __('Custom provider', 'web-stories'),
+    supportsCategories: false,
+    requiresAuthorAttribution: false,
+    attributionComponent: null,
+    apiDomain: 'http://nca.local',
+    paths: {
+      listMedia: '/wp-json/capi-media/v1/search/images',
+    },
+    fetchMediaErrorMessage: __(
+      'Error loading media from custom provider',
+      'web-stories'
+    ),
+    fetchCategoriesErrorMessage: __(
+      'Error loading categories from custom provider',
+      'web-stories'
+    ),
+  };
+  return p;
+}
 
 /** @typedef {import('react').React.Component} ReactComponent */
-
+addFilter('webstories.providers', 'webstory/providers', filterProvider);
 /**
  * @typedef ProviderConfiguration
  * @property {string} displayName The display name of the provider.
@@ -50,37 +83,44 @@ import { ContentType, ProviderType } from './constants';
  * fetching categories from this provider fails. Only needs to be specified if
  * the `supportsCategories` is true.
  */
-
+const paths = {
+  listMedia: '/v1/media',
+  listCategory: '/v1/categories',
+  registerUsage: '/v1/media:registerUsage',
+};
 /**
  *
  * @type {Object.<string, ProviderConfiguration>}
  */
-export const PROVIDERS = {
+export const PROVIDERS = applyFilters('webstories.providers', {
   [ProviderType.UNSPLASH]: {
-    displayName: __('Images', 'web-stories'),
-    supportsCategories: true,
-    requiresAuthorAttribution: true,
+    displayName: __('Unsplash', 'web-stories'),
+    supportsCategories: false,
+    requiresAuthorAttribution: false,
+    apiDomain: API_DOMAIN,
+    key: API_KEY,
+    paths,
     attributionComponent: UnsplashAttribution,
-    fetchMediaErrorMessage: sprintf(
-      /* translators: %s: media provider name. */
-      __('Error loading media from %s', 'web-stories'),
-      'Unsplash'
+    fetchMediaErrorMessage: __(
+      'Error loading media from Unsplash',
+      'web-stories'
     ),
-    fetchCategoriesErrorMessage: sprintf(
-      /* translators: %s: media provider name. */
-      __('Error loading categories from %s', 'web-stories'),
-      'Unsplash'
+    fetchCategoriesErrorMessage: __(
+      'Error loading categories from Unsplash',
+      'web-stories'
     ),
   },
   [ProviderType.COVERR]: {
     displayName: __('Video', 'web-stories'),
     supportsCategories: false,
     requiresAuthorAttribution: false,
+    apiDomain: API_DOMAIN,
+    key: API_KEY,
+    paths,
     attributionComponent: CoverrAttribution,
-    fetchMediaErrorMessage: sprintf(
-      /* translators: %s: media provider name. */
-      __('Error loading media from %s', 'web-stories'),
-      'Coverr'
+    fetchMediaErrorMessage: __(
+      'Error loading media from Coverr',
+      'web-stories'
     ),
     defaultPreviewWidth: 640,
   },
@@ -89,11 +129,10 @@ export const PROVIDERS = {
     contentTypeFilter: ContentType.GIF,
     supportsCategories: true,
     requiresAuthorAttribution: false,
+    apiDomain: API_DOMAIN,
+    key: API_KEY,
+    paths,
     attributionComponent: TenorAttribution,
-    fetchMediaErrorMessage: sprintf(
-      /* translators: %s: media provider name. */
-      __('Error loading media from %s', 'web-stories'),
-      'Tenor'
-    ),
+    fetchMediaErrorMessage: __('Error loading media from Tenor', 'web-stories'),
   },
-};
+});
